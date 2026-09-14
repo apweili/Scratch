@@ -51,26 +51,27 @@ public static class AreaDivideRuleExtensions
         var result = new List<List<IArea>>();
         foreach (var column in areas)
         {
-            var columnResult = new List<IEnumerable<IArea>>();
-            int? subColumnCount = null;
+            var dictionary = new Dictionary<int, IEnumerable<IArea>>();
             foreach (var row in column)
             {
                 var rowDivision = areaDivideRule.Divide(row);
-                if (!subColumnCount.HasValue)
+                foreach (var area in rowDivision.Where(r => r.Count > 0))
                 {
-                    subColumnCount = rowDivision.Count;
-                    columnResult.AddRange(rowDivision);
-                }
-                else
-                {
-                    for (var i = 0; i < subColumnCount; i++)
+                    var columnNumber = area[0].MatrixCoordinate.Column;
+                    if (dictionary.TryGetValue(columnNumber, out var subColumns))
                     {
-                        columnResult[i] = columnResult[i].Concat(rowDivision[i]);
+                        subColumns = subColumns.Concat(area);
                     }
+                    else
+                    {
+                        subColumns = area;
+                    }
+
+                    dictionary[columnNumber] = subColumns;
                 }
             }
 
-            result.AddRange(columnResult.Select(x => x.ToList()));
+            result.AddRange(dictionary.OrderBy(d => d.Key).Select(d => d.Value.ToList()));
         }
 
         return result;
