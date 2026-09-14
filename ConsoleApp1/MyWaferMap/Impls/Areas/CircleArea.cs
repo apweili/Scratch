@@ -43,7 +43,7 @@ public class CircleArea(double centerX, double centerY, double radius) : IArea
         }
     }
 
-    private IReadOnlyList<IArea> GetColumnAreas(ref readonly RectD rectD, RectToAreaRelation rectToAreaRelation)
+    private IReadOnlyList<IArea> GetColumnAreas(in RectD rectD, RectToAreaRelation rectToAreaRelation)
     {
         if (rectToAreaRelation.HasFlag(RectToAreaRelation.FullyInside))
         {
@@ -58,7 +58,7 @@ public class CircleArea(double centerX, double centerY, double radius) : IArea
         return [.. ProbeInAboveDirection(rectD).Reverse()];
     }
 
-    private IEnumerable<IArea> ProbeInBidirectionalDirections(ref readonly RectD rectD)
+    private IEnumerable<IArea> ProbeInBidirectionalDirections(in RectD rectD)
     {
         var rightStart = rectD.MoveToBelow();
         return ProbeInAboveDirection(rectD).Reverse().Concat(ProbeInBelowDirection(rightStart));
@@ -92,14 +92,14 @@ public class CircleArea(double centerX, double centerY, double radius) : IArea
         }
     }
 
-    private bool IsOutOfArea(ref readonly RectD rectD)
+    private bool IsOutOfArea(in RectD rectD)
     {
         var (horizontalShortestDistancePower, _) = CalculateHorizontalDistancePower(in rectD, in _circleCenter);
         var (verticalShortestDistancePower, _) = CalculateVerticalShortestDistancePower(in rectD, in _circleCenter);
         return horizontalShortestDistancePower + verticalShortestDistancePower > _circleCenter.RadiusPower;
     }
 
-    private bool IsColumnOutOfCircle(ref readonly RectD rectD, out RectToAreaRelation? rectToAreaRelation)
+    private bool IsColumnOutOfCircle(in RectD rectD, out RectToAreaRelation? rectToAreaRelation)
     {
         var (horizontalShortestDistancePower, horizontalLongestDistancePower) =
             CalculateHorizontalDistancePower(in rectD, in _circleCenter);
@@ -163,7 +163,7 @@ public class CircleArea(double centerX, double centerY, double radius) : IArea
 
         static int CalculateRowIndex(double currentRectY, double highestRectY, double height)
         {
-           return (int)double.Round(Math.Abs(currentRectY - highestRectY) / height);
+            return (int)double.Round(Math.Abs(currentRectY - highestRectY) / height);
         }
     }
 
