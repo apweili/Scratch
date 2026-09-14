@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Coravel" Version="6.0.2"/>
+        <PackageReference Include="Grpc.Tools" Version="2.81.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="OpenCvSharp5" Version="5.0.0.20260702" />
+        <PackageReference Include="OpenCvSharp5.GdipExtensions" Version="5.0.0.20260702"/>
+        <PackageReference Include="OpenCvSharp5.runtime.win" Version="5.0.0.20260702"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="Images\cat.jpg">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+</Project>
