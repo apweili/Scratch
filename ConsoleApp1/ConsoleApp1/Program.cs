@@ -1,4 +1,5 @@
 ﻿using ConsoleApp1.Helpers;
+using ConsoleApp1.StateMachineTest;
 using OpenCvSharp;
 
 var exeDir = AppContext.BaseDirectory;
@@ -10,10 +11,10 @@ var exeDir = AppContext.BaseDirectory;
 // taskA.Wait();
 // var hexWithSpace = BitConverter.ToString(taskA.Result);
 // Console.WriteLine(hexWithSpace);
-var currentThreadId = Thread.CurrentThread.ManagedThreadId;
-Console.WriteLine("In Main ThreadId:" + currentThreadId);
-FileHelper.TestWriteAsyncInThisWay();
-Console.ReadKey();
+// var currentThreadId = Environment.CurrentManagedThreadId;
+// Console.WriteLine("In Main ThreadId:" + currentThreadId);
+//FileHelper.TestWriteAsyncInThisWay();
+// Console.ReadKey();
 
 // JPG：FF D8 FF 
 // PNG：89 50 4E 47
@@ -26,3 +27,8 @@ Console.ReadKey();
 // var bytes = catMat.ToBytes();
 // var bytesImagePath = Path.Combine(imageDir, "cat2.png");
 // File.WriteAllBytes(bytesImagePath, bytes);
+
+
+var stateMachine = new InspectionStateMachine();
+stateMachine.InitializeStateMachine();
+stateMachine.StartAsync().GetAwaiter().GetResult();

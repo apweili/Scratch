@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaferMapAutomateGenerated",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyWaferMap", "MyWaferMap\MyWaferMap.csproj", "{08B92E73-45CD-453A-874E-E78BFBBF8201}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReducedData", "ReducedData\ReducedData.csproj", "{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{08B92E73-45CD-453A-874E-E78BFBBF8201}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08B92E73-45CD-453A-874E-E78BFBBF8201}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08B92E73-45CD-453A-874E-E78BFBBF8201}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
