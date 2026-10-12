@@ -15,9 +15,10 @@ public static class ExcelDeduplicationV1Helper
 
     public static void TestRun()
     {
-        const string folder = @"D:\workspace\test\Scratch\ConsoleApp1\ReducedData\cwj";
-        MergeDuplicatesByFirstCol(@$"{folder}\副本取票汇总表.xlsx",
-            @$"{folder}\取票汇总表trimmed.xlsx", true);
+        DeleteSomeRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
+        // MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
     }
 
     public static void MergeDuplicatesByFirstCol(string inputExcelPath, string outputExcelPath, bool skipHeader)
@@ -106,49 +107,14 @@ public static class ExcelDeduplicationV1Helper
 
     private static string GetProjectName1(string colName)
     {
-        var flagIndex = colName.IndexOf("项目名称", StringComparison.Ordinal);
-        if (flagIndex < 0)
-        {
-            flagIndex = colName.IndexOf("工程名称", StringComparison.Ordinal);
-        }
-
-        if (flagIndex < 0)
-        {
-            flagIndex = colName.IndexOf("合同名称", StringComparison.Ordinal);
-        }
-
-        if (flagIndex < 0)
-        {
-            return colName;
-        }
-
-        colName = colName[flagIndex..];
-        colName = colName.Replace(":", "：");
-        var parameters = colName.Split('：', StringSplitOptions.RemoveEmptyEntries);
-        if (parameters.Length <= 1) return colName;
-        var firstInput = parameters[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        return firstInput[0];
-    }
-
-    private static string GetProjectName2(string colName)
-    {
         var nameSpan = colName.AsSpan();
         var flagIndex = nameSpan.IndexOf("项目名称", StringComparison.Ordinal);
-        if (flagIndex < 0)
-        {
-            flagIndex = nameSpan.IndexOf("工程名称", StringComparison.Ordinal);
-        }
+        if (flagIndex < 0) flagIndex = nameSpan.IndexOf("工程名称", StringComparison.Ordinal);
 
-        if (flagIndex < 0)
-        {
-            flagIndex = nameSpan.IndexOf("合同名称", StringComparison.Ordinal);
-        }
+        if (flagIndex < 0) flagIndex = nameSpan.IndexOf("合同名称", StringComparison.Ordinal);
 
-        if (flagIndex < 0)
-        {
-            return colName;
-        }
-      
+        if (flagIndex < 0) return colName;
+
         var start = flagIndex + 4;
         var foundColon = false;
         while (start < colName.Length - 1)
@@ -161,10 +127,7 @@ public static class ExcelDeduplicationV1Helper
             break;
         }
 
-        if (!foundColon || start >= colName.Length)
-        {
-            return colName;
-        }
+        if (!foundColon || start >= colName.Length) return colName;
 
         var targetContentSpan = nameSpan[start..];
         char[] splitter = ['\r', '\n', ' '];
@@ -174,9 +137,43 @@ public static class ExcelDeduplicationV1Helper
         return targetContent;
     }
 
-    private static string GetProjectName3(string colName)
+    private static string GetProjectName2(string colName)
     {
-        var parameters = colName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        char[] splitter = ['\r', '\n', ' '];
+        var parameters = colName.Split(splitter, StringSplitOptions.RemoveEmptyEntries);
         return parameters[0];
+    }
+
+    public static void DeleteSomeRows(string inputExcelPath, string outputExcelPath, bool skipHeader)
+    {
+        using var workbook = new XLWorkbook(inputExcelPath);
+        var worksheet = workbook.Worksheets.First();
+        var usedRange = worksheet.RangeUsed();
+
+        if (usedRange == null || usedRange.RowCount() < (skipHeader ? 2 : 1))
+        {
+            workbook.SaveAs(outputExcelPath);
+            return;
+        }
+
+        var startRow = skipHeader ? 2 : 1;
+        var totalRowCount = usedRange.RowCount();
+        var rowsToDelete = new List<IXLRow>();
+        for (var rowNum = startRow; rowNum <= totalRowCount; rowNum++)
+        {
+            var currentRow = worksheet.Row(rowNum);
+            var firstColRawContent = currentRow.Cell(1).GetString().Trim();
+            if ((firstColRawContent.StartsWith("账期:") || firstColRawContent.StartsWith("账期：")) &&
+                firstColRawContent.IndexOf("号码", StringComparison.Ordinal) > 0)
+            {
+                Logger.Information("Row: {RowNum} deleted: {FirstColRawContent}", rowNum, firstColRawContent);
+                rowsToDelete.Add(currentRow);
+            }
+        }
+
+        rowsToDelete.Reverse();
+        Console.WriteLine($"Total row count: {rowsToDelete.Count} deleted");
+        rowsToDelete.ForEach(r => { r.Delete(); });
+        workbook.SaveAs(outputExcelPath);
     }
 }

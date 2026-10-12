@@ -14,4 +14,8 @@
       <PackageReference Include="ZLinq" Version="1.5.6" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="step-by-step\" />
+    </ItemGroup>
+
 </Project>
