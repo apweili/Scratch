@@ -6,17 +6,19 @@ namespace ReducedData;
 public static class ExcelDeduplicationV1Helper
 {
     private static readonly ILogger Logger = new LoggerConfiguration()
-        .MinimumLevel.Information() // 最低记录等级，信息及以上都写入
+        .MinimumLevel.Information()
         .WriteTo.File("logs/app_log.txt",
-            rollingInterval: RollingInterval.Day, // 按天自动生成新日志文件，避免单个文件过大
+            rollingInterval: RollingInterval.Day,
             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
         .CreateLogger().ForContext(typeof(ExcelDeduplicationV1Helper));
 
     // 直接可运行的调用示例
     public static void TestRun()
     {
+        const string folder = @"D:\workspace\test\Scratch\ConsoleApp1\ReducedData\cwj";
         // 直接替换为你的工控数据文件路径即可
-        MergeDuplicatesByFirstCol(@"D:\downloads\cwj\副本取票汇总表.xlsx", @"D:\downloads\cwj\取票汇总表trimmed.xlsx", true);
+        MergeDuplicatesByFirstCol(@$"{folder}\副本取票汇总表.xlsx",
+            @$"{folder}\取票汇总表trimmed.xlsx", true);
     }
 
     /// <summary>
@@ -65,46 +67,107 @@ public static class ExcelDeduplicationV1Helper
                 continue;
             }
 
-            if (!decimal.TryParse(currentRow.Cell(columnCount).GetString(), out var currentInvoiceAmount))
+            if (!decimal.TryParse(currentRow.Cell(columnCount).GetString(), out _))
             {
                 Console.WriteLine("Invalid invoice amount, reserved");
                 uniqueRows.Add(firstColRawContent, currentRow);
                 continue;
             }
 
-            if (!uniqueRows.TryGetValue(firstColKey, out var existRow))
+            if (!uniqueRows.TryGetValue(firstColKey, out var existedRow))
             {
                 Console.WriteLine($"Row: {rowNum} reserved");
                 uniqueRows.Add(firstColKey, currentRow);
                 continue;
             }
 
-            var existCell = existRow.Cell(columnCount);
-            var existInvoiceAmount = decimal.Parse(existCell.GetString());
-            existCell.Value = $"{existInvoiceAmount + currentInvoiceAmount}";
-            Logger.Information("Merge from {CurrentProjectName} to {ExistProjectName}", firstColRawContent,
-                existRow.Cell(1).GetString().Trim());
+            DoSomethingAfterFindingSameProject(ref existedRow, ref currentRow);
+            Logger.Information("Merge from:\n {CurrentProjectName}\n to=========>\n {ExistProjectName}\n",
+                firstColRawContent,
+                existedRow.Cell(1).GetString().Trim());
             // 1.0.0版本Delete行后自动重排索引，不会出现后续行号错位问题
             rowsToDelete.Add(currentRow);
             Console.WriteLine($"Row: {rowNum} deleted");
         }
 
         rowsToDelete.Reverse();
+        Console.WriteLine($"Total row count: {rowsToDelete.Count} deleted");
         rowsToDelete.ForEach(r => { r.Delete(); });
-
         workbook.SaveAs(outputExcelPath);
+        return;
+
+        static void DoSomethingAfterFindingSameProject(ref IXLRow existedRow, ref IXLRow currentRow)
+        {
+            var existCell = existedRow.Cell(columnCount);
+            var existInvoiceAmount = decimal.Parse(existCell.GetString());
+            var currentInvoiceAmount = decimal.Parse(currentRow.Cell(columnCount).GetString());
+            existCell.Value = $"{existInvoiceAmount + currentInvoiceAmount}";
+        }
     }
 
     private static string GetRowKey(string colName)
     {
-        var key = GetProjectName(colName);
+        // one by one
+        // var key = GetProjectName(colName, Constants.ProjectSuffix);
+        // var key = GetProjectName(colName, Constants.ProjectSuffix2);
+        var key = string.Empty;
         return string.IsNullOrEmpty(key) ? colName : key;
     }
 
-    private static string GetProjectName(string colName)
+    private static string GetProjectName(string colName, string projectSuffix)
     {
-        var parameters = colName.Split([":", "\n", "\r", " "], StringSplitOptions.RemoveEmptyEntries);
-        //todo 
-        return string.Empty;
+        var parameters = colName.Split([":", "："], StringSplitOptions.RemoveEmptyEntries);
+        var targetName = string.Empty;
+        if (parameters.Length > 1)
+        {
+            var startIndex = parameters[0].IndexOf(projectSuffix, StringComparison.Ordinal);
+            if (startIndex > 0 && !parameters[0].EndsWith("地点"))
+            {
+                targetName = parameters[1].Split([' ', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries)[0];
+            }
+        }
+        else
+        {
+            parameters = colName.Split([' ', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+            targetName = IsValid(parameters[0]) ? parameters[0] :
+                parameters.Length > 1 ? parameters[1] : string.Empty;
+        }
+
+        if (targetName.EndsWith(projectSuffix))
+        {
+            targetName = targetName[..^projectSuffix.Length];
+        }
+
+        return targetName;
+
+        static bool IsValid(string candidate)
+        {
+            if (candidate.EndsWith("东西湖区"))
+            {
+                return false;
+            }
+
+            if (candidate.StartsWith("合同"))
+            {
+                return false;
+            }
+
+            if (candidate.StartsWith("1、"))
+            {
+                return false;
+            }
+
+            if (candidate.StartsWith("H-2019-造-689"))
+            {
+                return false;
+            }
+
+            if (candidate.StartsWith("H-2019-造-667"))
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }
