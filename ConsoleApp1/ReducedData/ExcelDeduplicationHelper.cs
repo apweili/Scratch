@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using ClosedXML.Excel;
+using ZLinq;
 
 namespace ReducedData;
 
@@ -12,29 +13,19 @@ public static class ExcelDeduplicationV1Helper
             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
         .CreateLogger().ForContext(typeof(ExcelDeduplicationV1Helper));
 
-    // 直接可运行的调用示例
     public static void TestRun()
     {
         const string folder = @"D:\workspace\test\Scratch\ConsoleApp1\ReducedData\cwj";
-        // 直接替换为你的工控数据文件路径即可
         MergeDuplicatesByFirstCol(@$"{folder}\副本取票汇总表.xlsx",
             @$"{folder}\取票汇总表trimmed.xlsx", true);
     }
 
-    /// <summary>
-    /// 完全适配 ClosedXML.Excel 1.0.0 版本 按第一列合并重复行
-    /// </summary>
-    /// <param name="inputExcelPath">原始Excel路径</param>
-    /// <param name="outputExcelPath">处理后输出路径</param>
-    /// <param name="skipHeader">是否保留首行表头，默认true</param>
     public static void MergeDuplicatesByFirstCol(string inputExcelPath, string outputExcelPath, bool skipHeader)
     {
-        // 1.0.0 版本原生支持直接加载文件，无参数重载兼容
         using var workbook = new XLWorkbook(inputExcelPath);
         var worksheet = workbook.Worksheets.First();
         var usedRange = worksheet.RangeUsed();
 
-        // 兼容1.0.0版本RowCount空判断逻辑
         if (usedRange == null || usedRange.RowCount() < (skipHeader ? 2 : 1))
         {
             workbook.SaveAs(outputExcelPath);
@@ -47,12 +38,10 @@ public static class ExcelDeduplicationV1Helper
         var totalRowCount = usedRange.RowCount();
         Console.WriteLine($"Total row to handle: {totalRowCount}");
         var rowsToDelete = new List<IXLRow>();
-        // 1.0.0版本使用显式的ToString()避免隐式值类型转换异常
         for (var rowNum = startRow; rowNum <= totalRowCount; rowNum++)
         {
             Console.WriteLine($"Handling row: {rowNum}");
             var currentRow = worksheet.Row(rowNum);
-            // 修复1.0.0版本IBlank接口判断的兼容问题
             if (currentRow.Cell(1).IsEmpty())
             {
                 Console.WriteLine("row content is empty, reserved");
@@ -82,10 +71,10 @@ public static class ExcelDeduplicationV1Helper
             }
 
             DoSomethingAfterFindingSameProject(ref existedRow, ref currentRow);
-            Logger.Information("Merge from:\n {CurrentProjectName}\n to=========>\n {ExistProjectName}\n",
+            Logger.Information(
+                "Merge from:\n {CurrentProjectName}\n to===========================>>>>>>>>>>>>>>>>>>>>>>>>>>>\n {ExistProjectName}\n",
                 firstColRawContent,
                 existedRow.Cell(1).GetString().Trim());
-            // 1.0.0版本Delete行后自动重排索引，不会出现后续行号错位问题
             rowsToDelete.Add(currentRow);
             Console.WriteLine($"Row: {rowNum} deleted");
         }
@@ -107,67 +96,87 @@ public static class ExcelDeduplicationV1Helper
 
     private static string GetRowKey(string colName)
     {
-        // one by one
-        // var key = GetProjectName(colName, Constants.ProjectSuffix);
-        // var key = GetProjectName(colName, Constants.ProjectSuffix2);
+        // ReSharper disable once RedundantAssignment
         var key = string.Empty;
+        // one by one
+        // key = GetProjectName1(colName);
+        key = GetProjectName2(colName);
         return string.IsNullOrEmpty(key) ? colName : key;
     }
 
-    private static string GetProjectName(string colName, string projectSuffix)
+    private static string GetProjectName1(string colName)
     {
-        var parameters = colName.Split([":", "："], StringSplitOptions.RemoveEmptyEntries);
-        var targetName = string.Empty;
-        if (parameters.Length > 1)
+        var flagIndex = colName.IndexOf("项目名称", StringComparison.Ordinal);
+        if (flagIndex < 0)
         {
-            var startIndex = parameters[0].IndexOf(projectSuffix, StringComparison.Ordinal);
-            if (startIndex > 0 && !parameters[0].EndsWith("地点"))
-            {
-                targetName = parameters[1].Split([' ', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries)[0];
-            }
-        }
-        else
-        {
-            parameters = colName.Split([' ', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-            targetName = IsValid(parameters[0]) ? parameters[0] :
-                parameters.Length > 1 ? parameters[1] : string.Empty;
+            flagIndex = colName.IndexOf("工程名称", StringComparison.Ordinal);
         }
 
-        if (targetName.EndsWith(projectSuffix))
+        if (flagIndex < 0)
         {
-            targetName = targetName[..^projectSuffix.Length];
+            flagIndex = colName.IndexOf("合同名称", StringComparison.Ordinal);
         }
 
-        return targetName;
-
-        static bool IsValid(string candidate)
+        if (flagIndex < 0)
         {
-            if (candidate.EndsWith("东西湖区"))
-            {
-                return false;
-            }
-
-            if (candidate.StartsWith("合同"))
-            {
-                return false;
-            }
-
-            if (candidate.StartsWith("1、"))
-            {
-                return false;
-            }
-
-            if (candidate.StartsWith("H-2019-造-689"))
-            {
-                return false;
-            }
-
-            if (candidate.StartsWith("H-2019-造-667"))
-            {
-                return false;
-            }
-
-            return true;
+            return colName;
         }
+
+        colName = colName[flagIndex..];
+        colName = colName.Replace(":", "：");
+        var parameters = colName.Split('：', StringSplitOptions.RemoveEmptyEntries);
+        if (parameters.Length <= 1) return colName;
+        var firstInput = parameters[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return firstInput[0];
+    }
+
+    private static string GetProjectName2(string colName)
+    {
+        var nameSpan = colName.AsSpan();
+        var flagIndex = nameSpan.IndexOf("项目名称", StringComparison.Ordinal);
+        if (flagIndex < 0)
+        {
+            flagIndex = nameSpan.IndexOf("工程名称", StringComparison.Ordinal);
+        }
+
+        if (flagIndex < 0)
+        {
+            flagIndex = nameSpan.IndexOf("合同名称", StringComparison.Ordinal);
+        }
+
+        if (flagIndex < 0)
+        {
+            return colName;
+        }
+      
+        var start = flagIndex + 4;
+        var foundColon = false;
+        while (start < colName.Length - 1)
+        {
+            var currentChar = colName[start];
+            start++;
+            if (currentChar is not (':' or '：')) continue;
+
+            foundColon = true;
+            break;
+        }
+
+        if (!foundColon || start >= colName.Length)
+        {
+            return colName;
+        }
+
+        var targetContentSpan = nameSpan[start..];
+        char[] splitter = ['\r', '\n', ' '];
+        var targetContent =
+            new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
+                .TakeWhile(x => !splitter.Contains(x)).ToArray());
+        return targetContent;
+    }
+
+    private static string GetProjectName3(string colName)
+    {
+        var parameters = colName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parameters[0];
     }
 }
