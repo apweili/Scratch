@@ -1,5 +1,4 @@
-﻿using System.Data;
-using Serilog;
+﻿using Serilog;
 using ClosedXML.Excel;
 using ZLinq;
 
@@ -16,18 +15,18 @@ public static class ExcelDeduplicationV1Helper
 
     public static void TestRun()
     {
-        TransferRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
-            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
-        DeleteSomeRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
-            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
-        // MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        // TransferRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
+        // DeleteSomeRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
+        MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
     }
 
     private static void MergeDuplicatesByFirstCol(string inputExcelPath, string outputExcelPath, bool skipHeader)
     {
         using var workbook = new XLWorkbook(inputExcelPath);
-        var worksheet = workbook.Worksheets.First();
+        var worksheet = workbook.Worksheets.First(x => x.Name.Equals(Constants.SourceSheetName));
         var usedRange = worksheet.RangeUsed();
 
         if (usedRange == null || usedRange.RowCount() < (skipHeader ? 2 : 1))
@@ -103,8 +102,8 @@ public static class ExcelDeduplicationV1Helper
         // ReSharper disable once RedundantAssignment
         var key = string.Empty;
         // one by one
-        // key = GetProjectName1(colName);
-        key = GetProjectName2(colName);
+        key = GetProjectName1(colName);
+        //key = GetProjectName2(colName);
         return string.IsNullOrEmpty(key) ? colName : key;
     }
 
@@ -116,7 +115,7 @@ public static class ExcelDeduplicationV1Helper
 
         if (flagIndex < 0) flagIndex = nameSpan.IndexOf("合同名称", StringComparison.Ordinal);
 
-        if (flagIndex < 0) return colName;
+        if (flagIndex < 0) return GetProjectName2(colName);
 
         var start = flagIndex + 4;
         var foundColon = false;
@@ -130,13 +129,18 @@ public static class ExcelDeduplicationV1Helper
             break;
         }
 
-        if (!foundColon || start >= colName.Length) return colName;
+        if (!foundColon || start >= colName.Length) return GetProjectName2(colName);
 
         var targetContentSpan = nameSpan[start..];
         char[] splitter = ['\r', '\n', ' '];
         var targetContent =
             new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
                 .TakeWhile(x => !splitter.Contains(x)).ToArray());
+        if (targetContent.EndsWith("项目") || targetContent.EndsWith("工程"))
+        {
+            targetContent = targetContent[..^2];
+        }
+
         return targetContent;
     }
 
@@ -144,13 +148,18 @@ public static class ExcelDeduplicationV1Helper
     {
         char[] splitter = ['\r', '\n', ' '];
         var parameters = colName.Split(splitter, StringSplitOptions.RemoveEmptyEntries);
-        return parameters[0];
+        var targetContent = parameters[0];
+        if (targetContent.EndsWith("项目") || targetContent.EndsWith("工程"))
+        {
+            targetContent = targetContent[..^2];
+        }
+        return targetContent;
     }
 
     private static void DeleteSomeRows(string inputExcelPath, string outputExcelPath, bool skipHeader)
     {
         using var workbook = new XLWorkbook(inputExcelPath);
-        var worksheet = workbook.Worksheets.First();
+        var worksheet = workbook.Worksheets.First(x => x.Name.Equals(Constants.SourceSheetName));
         var usedRange = worksheet.RangeUsed();
 
         if (usedRange == null || usedRange.RowCount() < (skipHeader ? 2 : 1))
@@ -183,55 +192,37 @@ public static class ExcelDeduplicationV1Helper
     private static void TransferRows(string inputExcelPath, string outputExcelPath)
     {
         const string destinationWorksheetName = "Temp";
-        var rows = DeleteRows(inputExcelPath, outputExcelPath);
-        using var workbook2 = new XLWorkbook(outputExcelPath);
-        var destinationWorksheet = workbook2.Worksheets.First(x => x.Name == destinationWorksheetName);
-        
-        var dataTable = new DataTable();
-        dataTable.Columns.Add("Name", typeof(string));
-        dataTable.Columns.Add("Sold", typeof(int));
-
-        dataTable.Rows.Add("Cheesecake", 14);
-        dataTable.Rows.Add("Medovik", 6);
-        dataTable.Rows.Add("Muffin", 10);
-        destinationWorksheet.Cell(1,1).InsertData(rows);
-        workbook2.SaveAs(@"C:\Users\dawei\workspace\Scratch\ConsoleApp1\ReducedData\cwj\test.xlsx");
-        return;
-
-        static List<object[]>? DeleteRows(string inputExcelPath, string outputExcelPath)
+        using var workbook = new XLWorkbook(inputExcelPath);
+        var sourceWorksheet = workbook.Worksheets.First();
+        var usedRange = sourceWorksheet.RangeUsed();
+        if (usedRange == null || usedRange.RowCount() < 1)
         {
-            const string destinationWorksheetName = "Temp";
-            using var workbook = new XLWorkbook(inputExcelPath);
-            var sourceWorksheet = workbook.Worksheets.First();
-            var destinationWorksheet = workbook.Worksheets.FirstOrDefault(x => x.Name == destinationWorksheetName) ??
-                                       workbook.AddWorksheet(destinationWorksheetName);
-            var usedRange = sourceWorksheet.RangeUsed();
-            if (usedRange == null || usedRange.RowCount() < 1)
-            {
-                workbook.SaveAs(outputExcelPath);
-                return null;
-            }
-
-            var totalRowCount = usedRange.RowCount();
-            var rowsToTransfer = new List<IXLRow>();
-            for (var rowNum = 1; rowNum <= totalRowCount; rowNum++)
-            {
-                var currentRow = sourceWorksheet.Row(rowNum);
-                var firstColRawContent = currentRow.Cell(1).GetString().Trim();
-                if (firstColRawContent.StartsWith("对应正数发票代码:") || firstColRawContent.StartsWith("对应正数发票代码："))
-                {
-                    Logger.Information("Row: {RowNum} to be transferred: {FirstColRawContent}", rowNum, firstColRawContent);
-                    rowsToTransfer.Add(currentRow);
-                }
-            }
-
-            var dataToAdd = rowsToTransfer.Select(x => new object[] { x.Cell(1).GetString(), x.Cell(2).GetString() })
-                .ToList();
-            rowsToTransfer.Reverse();
-            rowsToTransfer.ForEach(r => { r.Delete(); });
-            Console.WriteLine($"Total row count: {rowsToTransfer.Count} transferred");
             workbook.SaveAs(outputExcelPath);
-            return dataToAdd;
+            return;
         }
+
+        var destinationWorksheet = workbook.Worksheets.FirstOrDefault(x => x.Name == destinationWorksheetName) ??
+                                   workbook.AddWorksheet(destinationWorksheetName);
+        destinationWorksheet.Unprotect();
+        var totalRowCount = usedRange.RowCount();
+        var rowsToTransfer = new List<IXLRow>();
+        for (var rowNum = 1; rowNum <= totalRowCount; rowNum++)
+        {
+            var currentRow = sourceWorksheet.Row(rowNum);
+            var firstColRawContent = currentRow.Cell(1).GetString().Trim();
+            if (firstColRawContent.StartsWith("对应正数发票代码:") || firstColRawContent.StartsWith("对应正数发票代码："))
+            {
+                Logger.Information("Row: {RowNum} to be transferred: {FirstColRawContent}", rowNum, firstColRawContent);
+                rowsToTransfer.Add(currentRow);
+            }
+        }
+
+        var dataToTransfer = rowsToTransfer.Select(d => new object[] { d.Cell(1).GetString(), d.Cell(2).GetString() })
+            .ToList();
+        destinationWorksheet.Cell(1, 1).InsertData(dataToTransfer);
+        rowsToTransfer.Reverse();
+        rowsToTransfer.ForEach(r => { r.Delete(); });
+        Console.WriteLine($"Total row count: {rowsToTransfer.Count} transferred");
+        workbook.SaveAs(outputExcelPath);
     }
 }
