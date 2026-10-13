@@ -68,7 +68,11 @@ public static partial class ExcelDeduplicationV1Helper
             }
 
             var firstColRawContent = currentRow.Cell(1).GetString().Trim();
-            var referenceProject = projectRows.Keys.FirstOrDefault(firstColRawContent.Contains);
+            var referenceProject = projectRows.Keys.FirstOrDefault(x =>
+            {
+                var index = firstColRawContent.IndexOf(x, StringComparison.Ordinal);
+                return index >= 0; // && index < firstColRawContent.Length / 2;
+            });
             if (string.IsNullOrEmpty(referenceProject)) continue;
 
             var existedRow = projectRows[referenceProject];
@@ -127,6 +131,12 @@ public static partial class ExcelDeduplicationV1Helper
         if (targetContent.EndsWith("项目") || targetContent.EndsWith("工程"))
         {
             targetContent = targetContent[..^2];
+        }
+        else if (decimal.TryParse(targetContent, out _))
+        {
+            targetContentSpan = nameSpan[(start + targetContent.Length + 1)..];
+            targetContent += new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
+                .TakeWhile(x => !splitter.Contains(x)).ToArray());
         }
 
         return targetContent;
