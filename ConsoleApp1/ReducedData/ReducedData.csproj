@@ -18,4 +18,10 @@
       <Folder Include="step-by-step\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="ExcelDeduplicationV1Helper.StatisticAllProject.cs">
+        <DependentUpon>ExcelDeduplicationHelper.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
 </Project>

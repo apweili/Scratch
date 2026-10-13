@@ -4,7 +4,7 @@ using ZLinq;
 
 namespace ReducedData;
 
-public static class ExcelDeduplicationV1Helper
+public static partial class ExcelDeduplicationV1Helper
 {
     private static readonly ILogger Logger = new LoggerConfiguration()
         .MinimumLevel.Information()
@@ -19,8 +19,10 @@ public static class ExcelDeduplicationV1Helper
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
         // DeleteSomeRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
-        MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
-            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
+        // MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
+        StatisticAllProject(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
     }
 
     private static void MergeDuplicatesByFirstCol(string inputExcelPath, string outputExcelPath, bool skipHeader)
@@ -53,7 +55,7 @@ public static class ExcelDeduplicationV1Helper
 
             var firstColRawContent = currentRow.Cell(1).GetString().Trim();
             var firstColKey = GetRowKey(firstColRawContent);
-            if (string.IsNullOrWhiteSpace(firstColKey))
+            if (string.IsNullOrEmpty(firstColKey))
             {
                 Console.WriteLine("row key is empty, reserved");
                 continue;
@@ -132,13 +134,21 @@ public static class ExcelDeduplicationV1Helper
         if (!foundColon || start >= colName.Length) return GetProjectName2(colName);
 
         var targetContentSpan = nameSpan[start..];
-        char[] splitter = ['\r', '\n', ' '];
+        char[] splitter = ['\r', '\n', ' ', ':', '：'];
         var targetContent =
             new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
                 .TakeWhile(x => !splitter.Contains(x)).ToArray());
         if (targetContent.EndsWith("项目") || targetContent.EndsWith("工程"))
         {
             targetContent = targetContent[..^2];
+        }
+        else if (targetContentSpan.Length > targetContent.Length && (targetContentSpan[targetContent.Length] == ':' ||
+                                                                     targetContentSpan[targetContent.Length] == '：'))
+        {
+            if (targetContent.EndsWith("项目名称") || targetContent.EndsWith("工程名称"))
+            {
+                targetContent = targetContent[..^4];
+            }
         }
 
         return targetContent;
