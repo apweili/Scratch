@@ -15,11 +15,15 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Logs\" />
       <Folder Include="step-by-step\" />
     </ItemGroup>
 
     <ItemGroup>
       <Compile Update="ExcelDeduplicationV1Helper.StatisticAllProject.cs">
+        <DependentUpon>ExcelDeduplicationHelper.cs</DependentUpon>
+      </Compile>
+      <Compile Update="DeleteWaterFee.cs">
         <DependentUpon>ExcelDeduplicationHelper.cs</DependentUpon>
       </Compile>
     </ItemGroup>

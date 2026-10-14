@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyWaferMap", "MyWaferMap\My
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReducedData", "ReducedData\ReducedData.csproj", "{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBusTest", "EventBusTest\EventBusTest.csproj", "{6D051963-AE0D-4708-AB00-17AAC105D25A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97F4CE32-AE70-48C6-8B53-0A97EFEE12F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D051963-AE0D-4708-AB00-17AAC105D25A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D051963-AE0D-4708-AB00-17AAC105D25A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D051963-AE0D-4708-AB00-17AAC105D25A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D051963-AE0D-4708-AB00-17AAC105D25A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -8,7 +8,7 @@ public static partial class ExcelDeduplicationV1Helper
 {
     private static readonly ILogger Logger = new LoggerConfiguration()
         .MinimumLevel.Information()
-        .WriteTo.File("logs/app_log.txt",
+        .WriteTo.File("../../../Logs/app_log.txt",
             rollingInterval: RollingInterval.Day,
             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
         .CreateLogger().ForContext(typeof(ExcelDeduplicationV1Helper));
@@ -21,7 +21,9 @@ public static partial class ExcelDeduplicationV1Helper
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
         // MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
-        StatisticAllProject(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        // StatisticAllProject(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
+        DeleteWaterFee(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
             @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
     }
 

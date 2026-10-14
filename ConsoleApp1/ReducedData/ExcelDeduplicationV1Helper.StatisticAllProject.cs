@@ -71,7 +71,35 @@ public static partial class ExcelDeduplicationV1Helper
             var referenceProject = projectRows.Keys.FirstOrDefault(x =>
             {
                 var index = firstColRawContent.IndexOf(x, StringComparison.Ordinal);
-                return index >= 0; // && index < firstColRawContent.Length / 2;
+                if(index < 0) return false;
+
+                if (x == "荷沙路")
+                {
+                    
+                }
+                var leftBraceIndex = firstColRawContent.IndexOf('（');
+                if(leftBraceIndex < 0)
+                {
+                    leftBraceIndex = firstColRawContent.IndexOf('(');
+                }
+
+                if (leftBraceIndex < 0)
+                {
+                    return true;
+                }
+
+                if (index < leftBraceIndex)
+                {
+                    return true;
+                }
+
+                var rightBraceIndex = firstColRawContent.IndexOf('）');
+                if (rightBraceIndex < 0)
+                {
+                    rightBraceIndex = firstColRawContent.IndexOf(')');
+                }
+
+                return index > rightBraceIndex;
             });
             if (string.IsNullOrEmpty(referenceProject)) continue;
 
@@ -134,10 +162,30 @@ public static partial class ExcelDeduplicationV1Helper
         }
         else if (decimal.TryParse(targetContent, out _))
         {
-            targetContentSpan = nameSpan[(start + targetContent.Length + 1)..];
+            start = start + targetContent.Length + 1;
+            targetContentSpan = nameSpan[start..];
             targetContent += new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
                 .TakeWhile(x => !splitter.Contains(x)).ToArray());
         }
+
+        start = start + targetContent.Length + 1;
+        if (start >= colName.Length - 1)
+        {
+            return targetContent; 
+        }
+        
+        targetContentSpan = nameSpan[start..];
+        var nextTargetContent = new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
+            .TakeWhile(x => !splitter.Contains(x)).ToArray());
+        if (nextTargetContent.StartsWith('，') || nextTargetContent.StartsWith('、'))
+        {
+            targetContent += nextTargetContent;
+        }
+
+        // if (targetContent.EndsWith("路"))
+        // {
+        //     return string.Empty;
+        // }
 
         return targetContent;
     }
