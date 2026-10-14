@@ -2,7 +2,7 @@
 
 namespace ReducedData;
 
-public static partial class ExcelDeduplicationV1Helper
+public static partial class ExcelHelper
 {
     private static void DeleteWaterFee(string inputExcelPath, string outputExcelPath, bool skipHeader)
     {
@@ -42,12 +42,25 @@ public static partial class ExcelDeduplicationV1Helper
         {
             // if (content.StartsWith("户号：") || content.StartsWith("户号:") ||
             //     content.StartsWith("机械表"))
-            if (content.EndsWith("季度维护费") || content.EndsWith("自请人员工资及社保"))
+            // if (content.EndsWith("季度维护费"))
+            // {
+            //     return true;
+            // }
+            //
+            // if (content.EndsWith("自请人员工资及社保"))
+            // {
+            //     return true;
+            // }
+            //
+            // if (content.StartsWith("帐期：") || content.StartsWith("帐期:"))
+            // {
+            //     return true;
+            // }
+            if (content.Contains("红字发票信息表编号"))
             {
                 return true;
-                
             }
-
+            
             return false;
         }
     }

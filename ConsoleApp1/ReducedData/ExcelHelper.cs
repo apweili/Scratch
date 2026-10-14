@@ -4,14 +4,14 @@ using ZLinq;
 
 namespace ReducedData;
 
-public static partial class ExcelDeduplicationV1Helper
+public static partial class ExcelHelper
 {
     private static readonly ILogger Logger = new LoggerConfiguration()
         .MinimumLevel.Information()
         .WriteTo.File("../../../Logs/app_log.txt",
             rollingInterval: RollingInterval.Day,
             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-        .CreateLogger().ForContext(typeof(ExcelDeduplicationV1Helper));
+        .CreateLogger().ForContext(typeof(ExcelHelper));
 
     public static void TestRun()
     {

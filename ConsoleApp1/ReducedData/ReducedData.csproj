@@ -20,11 +20,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="ExcelDeduplicationV1Helper.StatisticAllProject.cs">
-        <DependentUpon>ExcelDeduplicationHelper.cs</DependentUpon>
+      <Compile Update="ExcelHelper.StatisticAllProject.cs">
+        <DependentUpon>ExcelHelper.cs</DependentUpon>
       </Compile>
-      <Compile Update="DeleteWaterFee.cs">
-        <DependentUpon>ExcelDeduplicationHelper.cs</DependentUpon>
+      <Compile Update="ExcelHelper.Delete.cs">
+        <DependentUpon>ExcelHelper.cs</DependentUpon>
       </Compile>
     </ItemGroup>
 

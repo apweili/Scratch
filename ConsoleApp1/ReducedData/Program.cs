@@ -2,4 +2,4 @@
 
 using ReducedData;
 
-ExcelDeduplicationV1Helper.TestRun();
+ExcelHelper.TestRun();

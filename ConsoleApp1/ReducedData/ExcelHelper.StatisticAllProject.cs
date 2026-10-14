@@ -3,7 +3,7 @@ using ZLinq;
 
 namespace ReducedData;
 
-public static partial class ExcelDeduplicationV1Helper
+public static partial class ExcelHelper
 {
     private static void StatisticAllProject(string inputExcelPath, string outputExcelPath, bool skipHeader)
     {
@@ -73,10 +73,6 @@ public static partial class ExcelDeduplicationV1Helper
                 var index = firstColRawContent.IndexOf(x, StringComparison.Ordinal);
                 if(index < 0) return false;
 
-                if (x == "荷沙路")
-                {
-                    
-                }
                 var leftBraceIndex = firstColRawContent.IndexOf('（');
                 if(leftBraceIndex < 0)
                 {
