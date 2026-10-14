@@ -26,6 +26,12 @@
       <Compile Update="ExcelHelper.Delete.cs">
         <DependentUpon>ExcelHelper.cs</DependentUpon>
       </Compile>
+      <Compile Update="ExcelHelper.Transfer.cs">
+        <DependentUpon>ExcelHelper.cs</DependentUpon>
+      </Compile>
+      <Compile Update="ExcelHelper.FilterWithSameValue.cs">
+        <DependentUpon>ExcelHelper.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

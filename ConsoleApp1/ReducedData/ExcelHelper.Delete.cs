@@ -56,11 +56,10 @@ public static partial class ExcelHelper
             // {
             //     return true;
             // }
-            if (content.Contains("红字发票信息表编号"))
-            {
-                return true;
-            }
-            
+            return content.Contains("账期：");
+            return content.Contains("车牌号鄂");
+            return content.Contains("鄂A");
+            return content.Contains("电费年月");
             return false;
         }
     }

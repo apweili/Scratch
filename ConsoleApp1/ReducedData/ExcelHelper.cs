@@ -16,14 +16,16 @@ public static partial class ExcelHelper
     public static void TestRun()
     {
         // TransferRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
-        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
+            // @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
         // DeleteSomeRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
         // MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
         // StatisticAllProject(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
+        // DeleteWaterFee(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
-        DeleteWaterFee(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        FilterWithSameValue(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
             @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
     }
 
@@ -198,43 +200,6 @@ public static partial class ExcelHelper
         rowsToDelete.Reverse();
         rowsToDelete.ForEach(r => { r.Delete(); });
         Console.WriteLine($"Total row count: {rowsToDelete.Count} deleted");
-        workbook.SaveAs(outputExcelPath);
-    }
-
-    private static void TransferRows(string inputExcelPath, string outputExcelPath)
-    {
-        const string destinationWorksheetName = "Temp";
-        using var workbook = new XLWorkbook(inputExcelPath);
-        var sourceWorksheet = workbook.Worksheets.First();
-        var usedRange = sourceWorksheet.RangeUsed();
-        if (usedRange == null || usedRange.RowCount() < 1)
-        {
-            workbook.SaveAs(outputExcelPath);
-            return;
-        }
-
-        var destinationWorksheet = workbook.Worksheets.FirstOrDefault(x => x.Name == destinationWorksheetName) ??
-                                   workbook.AddWorksheet(destinationWorksheetName);
-        destinationWorksheet.Unprotect();
-        var totalRowCount = usedRange.RowCount();
-        var rowsToTransfer = new List<IXLRow>();
-        for (var rowNum = 1; rowNum <= totalRowCount; rowNum++)
-        {
-            var currentRow = sourceWorksheet.Row(rowNum);
-            var firstColRawContent = currentRow.Cell(1).GetString().Trim();
-            if (firstColRawContent.StartsWith("对应正数发票代码:") || firstColRawContent.StartsWith("对应正数发票代码："))
-            {
-                Logger.Information("Row: {RowNum} to be transferred: {FirstColRawContent}", rowNum, firstColRawContent);
-                rowsToTransfer.Add(currentRow);
-            }
-        }
-
-        var dataToTransfer = rowsToTransfer.Select(d => new object[] { d.Cell(1).GetString(), d.Cell(2).GetString() })
-            .ToList();
-        destinationWorksheet.Cell(1, 1).InsertData(dataToTransfer);
-        rowsToTransfer.Reverse();
-        rowsToTransfer.ForEach(r => { r.Delete(); });
-        Console.WriteLine($"Total row count: {rowsToTransfer.Count} transferred");
         workbook.SaveAs(outputExcelPath);
     }
 }
