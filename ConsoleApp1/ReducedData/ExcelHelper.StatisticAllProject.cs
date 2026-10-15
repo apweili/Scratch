@@ -33,7 +33,7 @@ public static partial class ExcelHelper
             }
 
             var firstColRawContent = currentRow.Cell(1).GetString().Trim();
-            var projectName = GetProjectName(firstColRawContent);
+            var projectName = GetProjectNameWithFlagPrefix(firstColRawContent);
             if (string.IsNullOrEmpty(projectName))
             {
                 continue;
@@ -123,7 +123,7 @@ public static partial class ExcelHelper
         }
     }
 
-    private static string GetProjectName(string colName)
+    private static string? GetProjectNameWithFlagPrefix(string colName)
     {
         var nameSpan = colName.AsSpan();
         var flagIndex = nameSpan.IndexOf("项目名称", StringComparison.Ordinal);
@@ -131,7 +131,7 @@ public static partial class ExcelHelper
 
         if (flagIndex < 0) flagIndex = nameSpan.IndexOf("合同名称", StringComparison.Ordinal);
 
-        if (flagIndex < 0) return string.Empty;
+        if (flagIndex < 0) return null;
 
         var start = flagIndex + 4;
         var foundColon = false;
@@ -145,7 +145,7 @@ public static partial class ExcelHelper
             break;
         }
 
-        if (!foundColon || start >= colName.Length) return string.Empty;
+        if (!foundColon || start >= colName.Length) return null;
 
         var targetContentSpan = nameSpan[start..];
         char[] splitter = ['\r', '\n', ' ', ':', '：'];
@@ -180,7 +180,7 @@ public static partial class ExcelHelper
 
         // if (targetContent.EndsWith("路"))
         // {
-        //     return string.Empty;
+        //     return null;
         // }
 
         return targetContent;

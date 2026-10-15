@@ -6,7 +6,7 @@ public static partial class ExcelHelper
 {
     private static void TransferRows(string inputExcelPath, string outputExcelPath)
     {
-        const string destinationWorksheetName = "隔离点";
+        const string destinationWorksheetName = "项目";
         using var workbook = new XLWorkbook(inputExcelPath);
         var sourceWorksheet = workbook.Worksheets.First();
         var usedRange = sourceWorksheet.RangeUsed();
@@ -46,6 +46,7 @@ public static partial class ExcelHelper
 
         bool NeedTransfer(string content)
         {
+            return content.Contains("项目") || content.Contains("工程");
             return content.Contains("开具红字增值税专用发票信息表编号") || content.Contains("红字发票信息确认单编号");
             return content.Contains("红字发票信息表编号");
             return content.StartsWith("对应正数发票代码:") || content.StartsWith("对应正数发票代码：");

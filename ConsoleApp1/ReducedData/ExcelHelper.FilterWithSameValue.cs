@@ -42,5 +42,7 @@ public static partial class ExcelHelper
                 Logger.Information("Content: {ProjectName},  InvoiceAmount: {InvoiceAmount}", valueTuple.Item2,
                     valueTuple.Item1);
         }
+        
+        workbook.SaveAs(outputExcelPath);
     }
 }

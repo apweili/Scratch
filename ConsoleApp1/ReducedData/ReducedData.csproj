@@ -8,9 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Bryan.Tools.Core" Version="1.0.4" />
       <PackageReference Include="ClosedXML" Version="0.105.1" />
       <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
       <PackageReference Include="Serilog.Sinks.File.Extensions" Version="5.0.0" />
+      <PackageReference Include="Soenneker.Utils.String.LongestCommonSequence" Version="4.0.1037" />
       <PackageReference Include="ZLinq" Version="1.5.6" />
     </ItemGroup>
 
@@ -30,6 +32,12 @@
         <DependentUpon>ExcelHelper.cs</DependentUpon>
       </Compile>
       <Compile Update="ExcelHelper.FilterWithSameValue.cs">
+        <DependentUpon>ExcelHelper.cs</DependentUpon>
+      </Compile>
+      <Compile Update="ExcelHelper.UnifySymbols.cs">
+        <DependentUpon>ExcelHelper.cs</DependentUpon>
+      </Compile>
+      <Compile Update="ExcelHelper.Distinct.cs">
         <DependentUpon>ExcelHelper.cs</DependentUpon>
       </Compile>
     </ItemGroup>

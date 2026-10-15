@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using ClosedXML.Excel;
 using ZLinq;
+using Soenneker.Utils.String.LongestCommonSequence;
 
 namespace ReducedData;
 
@@ -15,18 +16,22 @@ public static partial class ExcelHelper
 
     public static void TestRun()
     {
+        // UnifySymbols(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
+        // Distinct(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
         // TransferRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
-            // @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
         // DeleteSomeRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
-        // MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
-        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
+        MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
         // StatisticAllProject(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
         // DeleteWaterFee(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
-        FilterWithSameValue(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
-            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
+        // FilterWithSameValue(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
     }
 
     private static void MergeDuplicatesByFirstCol(string inputExcelPath, string outputExcelPath, bool skipHeader)
@@ -59,6 +64,7 @@ public static partial class ExcelHelper
 
             var firstColRawContent = currentRow.Cell(1).GetString().Trim();
             var firstColKey = GetRowKey(firstColRawContent);
+            firstColKey ??= firstColRawContent; 
             if (string.IsNullOrEmpty(firstColKey))
             {
                 Console.WriteLine("row key is empty, reserved");
@@ -72,14 +78,14 @@ public static partial class ExcelHelper
                 continue;
             }
 
-            if (!uniqueRows.TryGetValue(firstColKey, out var existedRow))
+            if (!NeedMerge(uniqueRows, firstColKey, out var existedRow))
             {
                 Console.WriteLine($"Row: {rowNum} reserved");
                 uniqueRows.Add(firstColKey, currentRow);
                 continue;
             }
 
-            DoSomethingAfterFindingSameProject(ref existedRow, ref currentRow);
+            DoSomethingAfterFindingSameProject(ref existedRow!, ref currentRow);
             Logger.Information(
                 "Merge from:\n {CurrentProjectName}\n to===========================>>>>>>>>>>>>>>>>>>>>>>>>>>>\n {ExistProjectName}\n",
                 firstColRawContent,
@@ -101,10 +107,41 @@ public static partial class ExcelHelper
             var currentInvoiceAmount = decimal.Parse(currentRow.Cell(columnCount).GetString());
             existCell.Value = $"{existInvoiceAmount + currentInvoiceAmount}";
         }
+
+        static bool NeedMerge(Dictionary<string, IXLRow> uniqueRows, string firstColKey, out IXLRow? existedRow)
+        {
+            if (uniqueRows.Count == 0)
+            {
+                existedRow = null;
+                return false;
+            }
+
+            if (uniqueRows.TryGetValue(firstColKey, out existedRow))
+            {
+                return true;
+            }
+
+            var similarityCalculator = Tools.StringHelper.CalculateSimilarity;
+            //LcsStringUtil.CalculateSimilarityPercentage(firstColKey, x.Key);
+            //Tools.StringHelper.CalculateSimilarity(text1,text2);
+            var similarityPercentage = uniqueRows
+                .Select(x => new
+                {
+                    Key = x.Key,
+                    Weight = similarityCalculator(firstColKey, x.Key),
+                    Row = x.Value
+                }).OrderByDescending(x => x.Weight)
+                .First();
+            if (similarityPercentage.Weight < 0.8) return false;
+
+            existedRow = similarityPercentage.Row;
+            return true;
+        }
     }
 
-    private static string GetRowKey(string colName)
+    private static string? GetRowKey(string colName)
     {
+        return GetProjectNameWithFlagPrefix(colName);
         // ReSharper disable once RedundantAssignment
         var key = string.Empty;
         // one by one
