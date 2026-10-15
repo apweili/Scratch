@@ -56,6 +56,7 @@ public static partial class ExcelHelper
             // {
             //     return true;
             // }
+            return content.Split('-').All(x => string.IsNullOrEmpty(x) || x.All(char.IsDigit));
             return content.Contains("账期：");
             return content.Contains("车牌号鄂");
             return content.Contains("鄂A");

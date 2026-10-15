@@ -134,6 +134,15 @@ public static partial class ExcelHelper
                 .First();
             if (similarityPercentage.Weight < 0.8) return false;
 
+            var specials = new[]
+            {
+                "东西湖区第三人民医院综合大楼",
+            };
+            if (specials.Where(firstColKey.StartsWith).Any(special => !similarityPercentage.Key.StartsWith(special)))
+            {
+                return false;
+            }
+           
             existedRow = similarityPercentage.Row;
             return true;
         }
