@@ -143,7 +143,7 @@ public class CircleArea(double centerX, double centerY, double radius) : IArea
         var columnCount = areas.Count;
         var rowCount = areas.Max(c => c.Count);
         var highestColumn = areas.First(c => c.Count == rowCount);
-        var highestRectangle = highestColumn.First().Bounds;
+        var highestRectangle = highestColumn[0].Bounds;
         var currentColumnIndex = -1;
         foreach (var column in areas)
         {
