@@ -24,10 +24,10 @@ public static partial class ExcelHelper
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
         // DeleteSomeRows(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
-        MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
-            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
-        // StatisticAllProject(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+        // MergeDuplicatesByFirstCol(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
+        StatisticAllProject(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true);
         // DeleteWaterFee(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
         //     @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx", true); 
         // FilterWithSameValue(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
@@ -121,9 +121,8 @@ public static partial class ExcelHelper
                 return true;
             }
 
-            var similarityCalculator = Tools.StringHelper.CalculateSimilarity;
-            //LcsStringUtil.CalculateSimilarityPercentage(firstColKey, x.Key);
-            //Tools.StringHelper.CalculateSimilarity(text1,text2);
+            //var similarityCalculator = Tools.StringHelper.CalculateSimilarity;
+            var similarityCalculator = LcsStringUtil.CalculateSimilarityPercentage;
             var similarityPercentage = uniqueRows
                 .Select(x => new
                 {
@@ -132,13 +131,9 @@ public static partial class ExcelHelper
                     Row = x.Value
                 }).OrderByDescending(x => x.Weight)
                 .First();
-            if (similarityPercentage.Weight < 0.8) return false;
-
-            var specials = new[]
-            {
-                "东西湖区第三人民医院综合大楼",
-            };
-            if (specials.Where(firstColKey.StartsWith).Any(special => !similarityPercentage.Key.StartsWith(special)))
+            if (similarityPercentage.Weight < 60) return false;
+         
+            if (Constants.ProjectKeyIndexes.Where(firstColKey.Contains).Any(special => !similarityPercentage.Key.Contains(special)))
             {
                 return false;
             }

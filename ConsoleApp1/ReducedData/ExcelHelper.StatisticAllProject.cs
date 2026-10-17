@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using Soenneker.Utils.String.LongestCommonSequence;
 using ZLinq;
 
 namespace ReducedData;
@@ -22,6 +23,7 @@ public static partial class ExcelHelper
         const int columnCount = 2;
         var totalRowCount = usedRange.RowCount();
         Console.WriteLine($"Total row to handle: {totalRowCount}");
+        var rowsToDelete = new List<IXLRow>();
         for (var rowNum = startRow; rowNum <= totalRowCount; rowNum++)
         {
             Console.WriteLine($"Handling row: {rowNum}");
@@ -39,13 +41,41 @@ public static partial class ExcelHelper
                 continue;
             }
 
-            if (projectRows.TryGetValue(projectName, out _)) continue;
-
             rowSet.Add(rowNum);
-            projectRows.Add(projectName, currentRow);
+            if (projectRows.Count == 0)
+            {
+                projectRows.Add(projectName, currentRow);
+                continue;
+            }
+
+            var similarityCalculator = LcsStringUtil.CalculateSimilarityPercentage;
+            var similarityPercentage = projectRows
+                .Select(x => new
+                {
+                    Key = x.Key,
+                    Weight = similarityCalculator(projectName, x.Key),
+                    Row = x.Value
+                }).OrderByDescending(x => x.Weight)
+                .First();
+            var a = Constants.ProjectKeyIndexes.FirstOrDefault(projectName.Contains);
+            var isSame = string.IsNullOrEmpty(a) || similarityPercentage.Key.Contains(a);
+            if (similarityPercentage.Weight > 50 && isSame)
+            {
+                var existedRow = similarityPercentage.Row;
+                rowsToDelete.Add(currentRow);
+                DoSomethingAfterFindingSameProject(ref existedRow, ref currentRow);
+                Logger.Information(
+                    "Merge from:\n {CurrentProjectName}\n to===========================>>>>>>>>>>>>>>>>>>>>>>>>>>>\n {ExistProjectName}\n",
+                    firstColRawContent,
+                    existedRow.Cell(1).GetString().Trim());
+            }
+            else
+            {
+                projectRows.Add(projectName, currentRow);
+            }
         }
         
-        var rowsToDelete = new List<IXLRow>();
+       
         for (var rowNum = startRow; rowNum <= totalRowCount; rowNum++)
         {
             if (rowSet.Contains(rowNum))
@@ -183,6 +213,17 @@ public static partial class ExcelHelper
         //     return null;
         // }
 
+        var projectIndex = targetContent.IndexOf("项目",  StringComparison.Ordinal);
+        if (projectIndex < 0)
+        {
+            projectIndex = targetContent.IndexOf("工程",  StringComparison.Ordinal);
+        }
+        
+        if (projectIndex > 0)
+        {
+            targetContent = targetContent[..projectIndex]; 
+        }
+        targetContent = targetContent.Replace("周边道路", string.Empty);
         return targetContent;
     }
 }
