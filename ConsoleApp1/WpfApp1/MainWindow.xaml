@@ -1,0 +1,24 @@
+﻿<Window x:Class="WpfApp1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        xmlns:viewModels="clr-namespace:WpfApp1.Models"
+        d:DataContext="{d:DesignInstance viewModels:MainWindowModel, IsDesignTimeCreatable=True}"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <TextBlock Text="{Binding CurrentRecord.Name}" />
+            <TextBlock Text="{Binding CurrentRecord.InvoiceAmount}" Margin="50, 0 ,0,0" />
+        </StackPanel>
+        <DataGrid Grid.Row="1" ItemsSource="{Binding Records}" EnableRowVirtualization="True" />
+        <Button Grid.Row="2" HorizontalAlignment="Left" Width="100" Command="{Binding NextCommand}"> Next </Button>
+        <Button Grid.Row="2" HorizontalAlignment="Right" Width="100" Command="{Binding SaveCommand}"> Save </Button>
+    </Grid>
+</Window>

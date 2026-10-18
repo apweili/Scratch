@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReducedData", "ReducedData\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventBusTest", "EventBusTest\EventBusTest.csproj", "{6D051963-AE0D-4708-AB00-17AAC105D25A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfApp1", "WpfApp1\WpfApp1.csproj", "{88FC82FB-44DD-4126-909F-4E666221CC0B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{6D051963-AE0D-4708-AB00-17AAC105D25A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D051963-AE0D-4708-AB00-17AAC105D25A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D051963-AE0D-4708-AB00-17AAC105D25A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88FC82FB-44DD-4126-909F-4E666221CC0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88FC82FB-44DD-4126-909F-4E666221CC0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88FC82FB-44DD-4126-909F-4E666221CC0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88FC82FB-44DD-4126-909F-4E666221CC0B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
