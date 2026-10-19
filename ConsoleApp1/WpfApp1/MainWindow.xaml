@@ -19,7 +19,7 @@
         </StackPanel>
         <DataGrid AutoGenerateColumns="False" Grid.Row="1" ItemsSource="{Binding Records}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=OneWay}" MaxWidth="600" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=OneWay}" Width="600" />
                 <!-- 直接隐藏不需要显示的列 -->
                 <DataGridTextColumn Header="InvoiceAmount" Binding="{Binding InvoiceAmount, Mode=OneWay}" />
                 <DataGridTemplateColumn Header="IsChecked">
