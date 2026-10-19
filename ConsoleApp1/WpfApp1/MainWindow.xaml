@@ -14,11 +14,14 @@
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <TextBlock Text="{Binding CurrentRecord.RowIndex}" Margin="15,0" />
+            <TextBlock Text="{Binding CurrentRecord.Key}" Margin="15,0" />
             <TextBlock Text="{Binding CurrentRecord.Name}" />
             <TextBlock Text="{Binding CurrentRecord.InvoiceAmount}" Margin="50, 0 ,0,0" />
         </StackPanel>
         <DataGrid AutoGenerateColumns="False" Grid.Row="1" ItemsSource="{Binding Records}">
             <DataGrid.Columns>
+                <DataGridTextColumn Header="Key" Binding="{Binding Key, Mode=OneWay}" />
                 <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=OneWay}" Width="600" />
                 <!-- 直接隐藏不需要显示的列 -->
                 <DataGridTextColumn Header="InvoiceAmount" Binding="{Binding InvoiceAmount, Mode=OneWay}" />

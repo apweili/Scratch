@@ -4,7 +4,6 @@ using ClosedXML.Excel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Soenneker.Utils.String.LongestCommonSequence;
-using ZLinq;
 
 namespace WpfApp1.Models;
 
@@ -69,9 +68,15 @@ public partial class MainWindowModel : ObservableObject
 
     public ICommand SaveCommand { get; }
     public ICommand NextCommand { get; }
+    private bool IsDisposed { get; set; }
 
     private void Save()
     {
+        if (IsDisposed)
+        {
+            return;
+        }
+        
         foreach (var (targetProject, recordsToMerge) in Statistic)
         {
             var baseInvoiceAmount = decimal.Parse(targetProject.InvoiceAmount);
@@ -91,16 +96,26 @@ public partial class MainWindowModel : ObservableObject
         recordsToDelete.ForEach(x => x.Row.Delete());
         Workbook.SaveAs(OutputExcelPath);
         Workbook.Dispose();
+        IsDisposed = true;
     }
 
     private void Next()
     {
-        var start = CurrentRecord == null ? 0 : CurrentRecord.Row.RowNumber();
-        var next = AllRecords.Skip(start)
-            .FirstOrDefault(x => !x.IsChecked && decimal.TryParse(x.InvoiceAmount, out _));
-        if (next == null) return;
+        while (true)
+        {
+            var start = CurrentRecord == null ? 0 : CurrentRecord.Row.RowNumber();
+            var next = AllRecords.Skip(start - 91)
+                .FirstOrDefault(x => !x.IsChecked && decimal.TryParse(x.InvoiceAmount, out _));
+            if (next == null) return;
 
-        CurrentRecord = next;
+            CurrentRecord = next;
+            if (Records?.Count() == 0)
+            {
+                continue;
+            }
+
+            break;
+        }
     }
 
     private IReadOnlyList<Record> AllRecords { get; }
@@ -112,7 +127,7 @@ public partial class MainWindowModel : ObservableObject
         var usedRange = worksheet.RangeUsed();
         return usedRange == null
             ? []
-            : Enumerable.Range(2, usedRange.RowCount() - 1).Select(x => new Record(worksheet.Row(x))).ToList();
+            : Enumerable.Range(2, usedRange.RowCount() - 1).Skip(91).Select(x => new Record(worksheet.Row(x))).ToList();
     }
 
     private IReadOnlyList<Record> GetRelatedRecords(Record currentRecord)
@@ -123,82 +138,13 @@ public partial class MainWindowModel : ObservableObject
             .. AllRecords.Where(x => !CurrentRecordSet.Contains(x) && !x.IsChecked).Select(x => new
                 {
                     Record = x,
-                    Similarity = similarityCalculator(GetProjectName(currentRecord.Name) ?? currentRecord.Name,
-                        GetProjectName(x.Name) ?? x.Name)
+                    Similarity = similarityCalculator(
+                        string.IsNullOrEmpty(currentRecord.Key) ? currentRecord.Name : currentRecord.Key,
+                        string.IsNullOrEmpty(x.Key) ? x.Name : x.Key)
                 })
                 .Where(x => x.Similarity >= 50).OrderByDescending(x => x.Similarity).Select(x => x.Record)
         ];
     }
 
     private XLWorkbook Workbook { get; }
-
-    private static string? GetProjectName(string colName)
-    {
-        var nameSpan = colName.AsSpan();
-        var flagIndex = nameSpan.IndexOf("项目名称", StringComparison.Ordinal);
-        if (flagIndex < 0) flagIndex = nameSpan.IndexOf("工程名称", StringComparison.Ordinal);
-
-        if (flagIndex < 0) flagIndex = nameSpan.IndexOf("合同名称", StringComparison.Ordinal);
-
-        if (flagIndex < 0) return null;
-
-        var start = flagIndex + 4;
-        var foundColon = false;
-        while (start < colName.Length - 1)
-        {
-            var currentChar = colName[start];
-            start++;
-            if (currentChar is not (':' or '：')) continue;
-
-            foundColon = true;
-            break;
-        }
-
-        if (!foundColon || start >= colName.Length) return null;
-
-        var targetContentSpan = nameSpan[start..];
-        char[] splitter = ['\r', '\n', ' ', ':', '：'];
-        var targetContent =
-            new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
-                .TakeWhile(x => !splitter.Contains(x)).ToArray());
-        if (targetContent.EndsWith("项目") || targetContent.EndsWith("工程"))
-        {
-            targetContent = targetContent[..^2];
-        }
-        else if (decimal.TryParse(targetContent, out _))
-        {
-            start = start + targetContent.Length + 1;
-            targetContentSpan = nameSpan[start..];
-            targetContent += new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
-                .TakeWhile(x => !splitter.Contains(x)).ToArray());
-        }
-
-        start = start + targetContent.Length + 1;
-        if (start >= colName.Length - 1)
-        {
-            return targetContent;
-        }
-
-        targetContentSpan = nameSpan[start..];
-        var nextTargetContent = new string(targetContentSpan.AsValueEnumerable().SkipWhile(x => splitter.Contains(x))
-            .TakeWhile(x => !splitter.Contains(x)).ToArray());
-        if (nextTargetContent.StartsWith('，') || nextTargetContent.StartsWith('、'))
-        {
-            targetContent += nextTargetContent;
-        }
-
-        var projectIndex = targetContent.IndexOf("项目", StringComparison.Ordinal);
-        if (projectIndex < 0)
-        {
-            projectIndex = targetContent.IndexOf("工程", StringComparison.Ordinal);
-        }
-
-        if (projectIndex > 0)
-        {
-            targetContent = targetContent[..projectIndex];
-        }
-
-        targetContent = targetContent.Replace("周边道路", string.Empty);
-        return targetContent;
-    }
 }
