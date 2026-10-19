@@ -3,6 +3,7 @@ using System.Windows.Input;
 using ClosedXML.Excel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Soenneker.Utils.String.LongestCommonSequence;
 
 namespace WpfApp1.Models;
 
@@ -16,9 +17,9 @@ public partial class MainWindowModel : ObservableObject
         OutputExcelPath = outputExcelPath;
         NextCommand = new RelayCommand(Next);
         SaveCommand = new RelayCommand(Save);
-        Workbook  = new XLWorkbook(inputExcelPath);
-        AllRecords = GetAllRecords(); 
-        CurrentRecord = AllRecords.FirstOrDefault();
+        Workbook = new XLWorkbook(inputExcelPath);
+        AllRecords = GetAllRecords();
+        Next();
     }
 
     private void RecordOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -33,8 +34,10 @@ public partial class MainWindowModel : ObservableObject
         switch (record.IsChecked)
         {
             case true when !mergedRecords.Contains(record):
+                mergedRecords.Add(record);
                 return;
             case false when mergedRecords.Contains(record):
+                mergedRecords.Remove(record);
                 break;
         }
     }
@@ -64,20 +67,37 @@ public partial class MainWindowModel : ObservableObject
 
     private void Save()
     {
+        foreach (var (targetProject, recordsToMerge) in Statistic)
+        {
+            var baseInvoiceAmount = decimal.Parse(targetProject.InvoiceAmount);
+            foreach (var record in recordsToMerge)
+            {
+                if (decimal.TryParse(record.InvoiceAmount, out var amount))
+                {
+                    baseInvoiceAmount += amount;
+                }
+            }
+
+            targetProject.Row.Value = baseInvoiceAmount;
+        }
+
+        var recordsToDelete = Statistic.Values.SelectMany(v => v).OrderByDescending(x => x.Row.RowNumber()).ToList();
+        recordsToDelete.ForEach(x => x.Row.Delete());
         Workbook.SaveAs(OutputExcelPath);
+        Workbook.Dispose();
     }
 
     private void Next()
     {
-        if (CurrentRecord == null) return;
-
-        var next = AllRecords.Skip(CurrentRecord.Row.RowNumber()).FirstOrDefault(x => !x.IsChecked);
+        var start = CurrentRecord == null ? 0 : CurrentRecord.Row.RowNumber();
+        var next = AllRecords.Skip(start)
+            .FirstOrDefault(x => !x.IsChecked && decimal.TryParse(x.InvoiceAmount, out _));
         if (next == null) return;
 
         CurrentRecord = next;
     }
 
-    private IReadOnlyList<Record> AllRecords { get; set; }
+    private IReadOnlyList<Record> AllRecords { get; }
 
     private IReadOnlyList<Record> GetAllRecords()
     {
@@ -87,11 +107,17 @@ public partial class MainWindowModel : ObservableObject
         return usedRange == null
             ? []
             : Enumerable.Range(2, usedRange.RowCount() - 1).Select(x => new Record(worksheet.Row(x))).ToList();
-    } 
+    }
 
-    private static IReadOnlyList<Record> GetRelatedRecords(Record currentRecord)
+    private IReadOnlyList<Record> GetRelatedRecords(Record currentRecord)
     {
-        return null;
+        var similarityCalculator = LcsStringUtil.CalculateSimilarityPercentage;
+        return
+        [
+            .. AllRecords.Where(x => x != currentRecord && !x.IsChecked).Select(x => new
+                    { Record = x, Similarity = similarityCalculator(currentRecord.Name, x.Name) })
+                .Where(x => x.Similarity >= 50).OrderByDescending(x => x.Similarity).Select(x => x.Record)
+        ];
     }
 
     private XLWorkbook Workbook { get; }

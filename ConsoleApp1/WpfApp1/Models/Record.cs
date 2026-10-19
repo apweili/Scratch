@@ -3,11 +3,17 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace WpfApp1.Models;
 
-public partial class Record(IXLRow row) : ObservableObject
+public partial class Record : ObservableObject
 {
-    public IXLRow Row { get; } = row;
+    public Record(IXLRow row)
+    {
+        Row = row;
+        Name = Row.Cell(1).GetString().Trim();
+        InvoiceAmount = Row.Cell(2).GetString().Trim();
+    }
 
-    public string Name => Row.Cell(1).GetString().Trim();
-    public string InvoiceAmount => Row.Cell(1).GetString().Trim();
+    public IXLRow Row { get; }
+    public string Name { get; }
+    public string InvoiceAmount { get; }
     [ObservableProperty] public partial bool IsChecked { get; set; }
 }

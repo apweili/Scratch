@@ -9,15 +9,23 @@
         Title="MainWindow" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="auto" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="10*" />
+            <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal">
             <TextBlock Text="{Binding CurrentRecord.Name}" />
             <TextBlock Text="{Binding CurrentRecord.InvoiceAmount}" Margin="50, 0 ,0,0" />
         </StackPanel>
-        <DataGrid Grid.Row="1" ItemsSource="{Binding Records}" EnableRowVirtualization="True" />
+        <DataGrid AutoGenerateColumns="False" Grid.Row="1" ItemsSource="{Binding Records}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=OneWay}" MaxWidth="600" />
+                <!-- 直接隐藏不需要显示的列 -->
+                <DataGridTextColumn Header="InvoiceAmount" Binding="{Binding InvoiceAmount, Mode=OneWay}" />
+                <DataGridCheckBoxColumn Header="IsChecked"
+                                        Binding="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </DataGrid.Columns>
+        </DataGrid>
         <Button Grid.Row="2" HorizontalAlignment="Left" Width="100" Command="{Binding NextCommand}"> Next </Button>
         <Button Grid.Row="2" HorizontalAlignment="Right" Width="100" Command="{Binding SaveCommand}"> Save </Button>
     </Grid>

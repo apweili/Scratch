@@ -1,13 +1,4 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows;
 using WpfApp1.Models;
 
 namespace WpfApp1;
@@ -20,7 +11,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        var vm = new MainWindowModel();
+        var vm = new MainWindowModel(@$"{Constants.RootFolderName}\副本取票汇总表.xlsx",
+            @$"{Constants.RootFolderName}\取票汇总表trimmed.xlsx");
         DataContext = vm;
     }
 }
