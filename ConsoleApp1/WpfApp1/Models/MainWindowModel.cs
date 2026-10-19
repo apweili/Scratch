@@ -11,6 +11,7 @@ public partial class MainWindowModel : ObservableObject
 {
     private string OutputExcelPath { get; }
     private Dictionary<Record, ISet<Record>> Statistic { get; } = new();
+    private ISet<Record> CurrentRecordSet { get; } = new HashSet<Record>();
 
     public MainWindowModel(string inputExcelPath, string outputExcelPath)
     {
@@ -59,7 +60,10 @@ public partial class MainWindowModel : ObservableObject
 
     partial void OnCurrentRecordChanged(Record? value)
     {
-        if (value != null) Records = GetRelatedRecords(value);
+        if (value == null) return;
+
+        CurrentRecordSet.Add(value);
+        Records = GetRelatedRecords(value);
     }
 
     public ICommand SaveCommand { get; }
@@ -78,7 +82,8 @@ public partial class MainWindowModel : ObservableObject
                 }
             }
 
-            targetProject.Row.Value = baseInvoiceAmount;
+            var targetCell = targetProject.Row.Cell(2);
+            targetCell.Value = baseInvoiceAmount;
         }
 
         var recordsToDelete = Statistic.Values.SelectMany(v => v).OrderByDescending(x => x.Row.RowNumber()).ToList();
@@ -114,7 +119,7 @@ public partial class MainWindowModel : ObservableObject
         var similarityCalculator = LcsStringUtil.CalculateSimilarityPercentage;
         return
         [
-            .. AllRecords.Where(x => x != currentRecord && !x.IsChecked).Select(x => new
+            .. AllRecords.Where(x => !CurrentRecordSet.Contains(x) && !x.IsChecked).Select(x => new
                     { Record = x, Similarity = similarityCalculator(currentRecord.Name, x.Name) })
                 .Where(x => x.Similarity >= 50).OrderByDescending(x => x.Similarity).Select(x => x.Record)
         ];

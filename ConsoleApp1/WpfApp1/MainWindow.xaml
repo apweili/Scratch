@@ -22,8 +22,16 @@
                 <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=OneWay}" MaxWidth="600" />
                 <!-- 直接隐藏不需要显示的列 -->
                 <DataGridTextColumn Header="InvoiceAmount" Binding="{Binding InvoiceAmount, Mode=OneWay}" />
-                <DataGridCheckBoxColumn Header="IsChecked"
-                                        Binding="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <DataGridTemplateColumn Header="IsChecked">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsChecked, 
+                                  Mode=TwoWay, 
+                                  UpdateSourceTrigger=PropertyChanged}"
+                                      HorizontalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
         <Button Grid.Row="2" HorizontalAlignment="Left" Width="100" Command="{Binding NextCommand}"> Next </Button>
