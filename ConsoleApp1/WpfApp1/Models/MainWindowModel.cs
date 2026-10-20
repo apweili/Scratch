@@ -126,9 +126,8 @@ public partial class MainWindowModel : ObservableObject
                     baseInvoiceAmount += amount;
                 }
             }
-
-            var targetCell = targetProject.Row.Cell(2);
-            targetCell.Value = baseInvoiceAmount;
+            
+            targetProject.SetInvoiceAmount(baseInvoiceAmount);
         }
 
         var recordsToDelete = Statistic.Values.SelectMany(v => v).OrderByDescending(x => x.Row.RowNumber()).ToList();
@@ -200,7 +199,7 @@ public partial class MainWindowModel : ObservableObject
                             string.IsNullOrEmpty(currentRecord.Key) ? currentRecord.Name : currentRecord.Key,
                             string.IsNullOrEmpty(x.Key) ? x.Name : x.Key)
                     })
-                .Where(x => x.Similarity >= 30).OrderByDescending(x => x.Similarity).Select(x => x.Record)
+                .Where(x => x.Similarity >= 0).OrderByDescending(x => x.Similarity).Select(x => x.Record)
         ];
     }
 

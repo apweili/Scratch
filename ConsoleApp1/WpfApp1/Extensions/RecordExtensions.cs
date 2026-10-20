@@ -21,5 +21,11 @@ public static class RecordExtensions
         {
             record.Row.Cell(Index).SetValue(1);
         }
+
+        public void SetInvoiceAmount(decimal invoiceAmount)
+        {
+            var targetCell = record.Row.Cell(2);
+            targetCell.Value = invoiceAmount;
+        }
     }
 }
