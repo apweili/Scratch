@@ -25,13 +25,16 @@
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal">
             <TextBlock Text="{Binding CurrentRecord.RowIndex}" Margin="15,0" />
-            <TextBox IsReadOnly="True" Text="{Binding CurrentRecord.Key, Mode=OneWay}" Margin="15,0" />
-            <TextBox IsReadOnly="True" Text="{Binding CurrentRecord.Name, Mode=OneWay}" />
+            <TextBox BorderThickness="0" Background="Transparent" IsReadOnly="True"
+                     Text="{Binding CurrentRecord.Key, Mode=OneWay}" Margin="15,0" />
+            <TextBox BorderThickness="0" Background="Transparent" IsReadOnly="True"
+                     Text="{Binding CurrentRecord.Name, Mode=OneWay}" />
             <TextBlock Text="{Binding CurrentRecord.InvoiceAmount}" Margin="50, 0 ,0,0" />
         </StackPanel>
         <StackPanel Grid.Row="1" Orientation="Horizontal">
             <Button Content="Filter" Margin="15,0" Command="{Binding SearchCommand}"/>
             <TextBox MinWidth="100" Text="{Binding Filter}"/>
+            <Button Content="Mark" Margin="15,0" Command="{Binding MarkCommand}"/>
         </StackPanel>
         <DataGrid AutoGenerateColumns="False" Grid.Row="2" ItemsSource="{Binding Records}"
                   RowStyle="{StaticResource DataGridRowStyle}">

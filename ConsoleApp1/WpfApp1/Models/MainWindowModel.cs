@@ -4,6 +4,7 @@ using ClosedXML.Excel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Soenneker.Utils.String.LongestCommonSequence;
+using WpfApp1.Extensions;
 
 namespace WpfApp1.Models;
 
@@ -17,12 +18,18 @@ public partial class MainWindowModel : ObservableObject
     public MainWindowModel(string inputExcelPath, string outputExcelPath)
     {
         OutputExcelPath = outputExcelPath;
+        MarkCommand = new RelayCommand(Mark);
         SearchCommand = new RelayCommand(Search);
         NextCommand = new RelayCommand(Next);
         SaveCommand = new RelayCommand(Save);
         Workbook = new XLWorkbook(inputExcelPath);
         AllRecords = GetAllRecords();
         Next();
+    }
+
+    private void Mark()
+    {
+        CurrentRecord?.Mark();
     }
 
     private void Search()
@@ -99,6 +106,7 @@ public partial class MainWindowModel : ObservableObject
     public ICommand SaveCommand { get; }
     public ICommand NextCommand { get; }
     public ICommand SearchCommand { get; }
+    public ICommand MarkCommand { get; }
     private bool IsDisposed { get; set; }
 
     private void Save()
@@ -132,11 +140,12 @@ public partial class MainWindowModel : ObservableObject
 
     private void Next()
     {
+        CurrentRecord?.Mark();
         while (true)
         {
             var start = CurrentRecord == null ? 0 : CurrentRecord.Row.RowNumber();
             var next = AllRecords.Skip(start - SkipCount)
-                .FirstOrDefault(x => !x.IsChecked && decimal.TryParse(x.InvoiceAmount, out _));
+                .FirstOrDefault(x => !x.IsChecked && !x.IsMarked() && decimal.TryParse(x.InvoiceAmount, out _));
             if (next == null) return;
 
             CurrentRecord = next;
