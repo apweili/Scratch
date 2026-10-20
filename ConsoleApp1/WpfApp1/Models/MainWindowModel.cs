@@ -199,7 +199,7 @@ public partial class MainWindowModel : ObservableObject
                             string.IsNullOrEmpty(currentRecord.Key) ? currentRecord.Name : currentRecord.Key,
                             string.IsNullOrEmpty(x.Key) ? x.Name : x.Key)
                     })
-                .Where(x => x.Similarity >= 0).OrderByDescending(x => x.Similarity).Select(x => x.Record)
+                .Where(x => x.Similarity >= 1).OrderByDescending(x => x.Similarity).Select(x => x.Record)
         ];
     }
 
