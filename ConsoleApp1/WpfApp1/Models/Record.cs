@@ -12,6 +12,7 @@ public partial class Record : ObservableObject
         Name = Row.Cell(1).GetString().Trim();
         Key = GetProjectName(Name) ?? string.Empty;
         InvoiceAmount = Row.Cell(2).GetString().Trim();
+        IsVisible = true;
     }
 
     public string Key { get; }
@@ -21,6 +22,7 @@ public partial class Record : ObservableObject
     public string Name { get; }
     public string InvoiceAmount { get; }
     [ObservableProperty] public partial bool IsChecked { get; set; }
+    [ObservableProperty] public partial bool IsVisible { get; set; }
 
     private static string? GetProjectName(string colName)
     {

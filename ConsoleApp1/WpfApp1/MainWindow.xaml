@@ -5,21 +5,36 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         xmlns:viewModels="clr-namespace:WpfApp1.Models"
+        xmlns:wpfApp1="clr-namespace:WpfApp1"
         d:DataContext="{d:DesignInstance viewModels:MainWindowModel, IsDesignTimeCreatable=True}"
         Title="MainWindow" Height="450" Width="800">
+    <Window.Resources>
+        <wpfApp1:BoolToRowVisibilityConverter x:Key="BoolToRowVisibilityConverter" />
+        <Style TargetType="{x:Type DataGridRow}" x:Key="DataGridRowStyle">
+            <Setter Property="Visibility" 
+                    Value="{Binding IsVisible, 
+                          Converter={StaticResource BoolToRowVisibilityConverter}}" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="1*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="10*" />
-            <RowDefinition Height="1*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal">
             <TextBlock Text="{Binding CurrentRecord.RowIndex}" Margin="15,0" />
-            <TextBlock Text="{Binding CurrentRecord.Key}" Margin="15,0" />
-            <TextBlock Text="{Binding CurrentRecord.Name}" />
+            <TextBox IsReadOnly="True" Text="{Binding CurrentRecord.Key, Mode=OneWay}" Margin="15,0" />
+            <TextBox IsReadOnly="True" Text="{Binding CurrentRecord.Name, Mode=OneWay}" />
             <TextBlock Text="{Binding CurrentRecord.InvoiceAmount}" Margin="50, 0 ,0,0" />
         </StackPanel>
-        <DataGrid AutoGenerateColumns="False" Grid.Row="1" ItemsSource="{Binding Records}">
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <Button Content="Filter" Margin="15,0" Command="{Binding SearchCommand}"/>
+            <TextBox MinWidth="100" Text="{Binding Filter}"/>
+        </StackPanel>
+        <DataGrid AutoGenerateColumns="False" Grid.Row="2" ItemsSource="{Binding Records}"
+                  RowStyle="{StaticResource DataGridRowStyle}">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Key" Binding="{Binding Key, Mode=OneWay}" />
                 <DataGridTextColumn Header="Name" Binding="{Binding Name, Mode=OneWay}" Width="600" />
@@ -37,7 +52,7 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
-        <Button Grid.Row="2" HorizontalAlignment="Left" Width="100" Command="{Binding NextCommand}"> Next </Button>
-        <Button Grid.Row="2" HorizontalAlignment="Right" Width="100" Command="{Binding SaveCommand}"> Save </Button>
+        <Button Grid.Row="3" HorizontalAlignment="Left" Width="100" Command="{Binding NextCommand}"> Next </Button>
+        <Button Grid.Row="3" HorizontalAlignment="Right" Width="100" Command="{Binding SaveCommand}"> Save </Button>
     </Grid>
 </Window>

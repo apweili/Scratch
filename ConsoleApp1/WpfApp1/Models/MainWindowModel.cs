@@ -12,15 +12,36 @@ public partial class MainWindowModel : ObservableObject
     private string OutputExcelPath { get; }
     private Dictionary<Record, ISet<Record>> Statistic { get; } = new();
     private ISet<Record> CurrentRecordSet { get; } = new HashSet<Record>();
+    private IDictionary<string, ISet<Record>> RelatedRecordSets { get; } = new Dictionary<string, ISet<Record>>();
 
     public MainWindowModel(string inputExcelPath, string outputExcelPath)
     {
         OutputExcelPath = outputExcelPath;
+        SearchCommand = new RelayCommand(Search);
         NextCommand = new RelayCommand(Next);
         SaveCommand = new RelayCommand(Save);
         Workbook = new XLWorkbook(inputExcelPath);
         AllRecords = GetAllRecords();
         Next();
+    }
+
+    private void Search()
+    {
+        var filter = Filter;
+        var records = Records;
+        if (string.IsNullOrEmpty(filter))
+        {
+            foreach (var record in records)
+            {
+                record.IsVisible = true;
+            }
+            return;
+        }
+
+        foreach (var record in records.Where(x => !x.Name.Contains(filter)))
+        {
+            record.IsVisible = false;
+        }
     }
 
     private void RecordOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -45,13 +66,22 @@ public partial class MainWindowModel : ObservableObject
 
     [ObservableProperty] public partial Record? CurrentRecord { get; set; }
 
-    [ObservableProperty] public partial IEnumerable<Record>? Records { get; set; }
+    [ObservableProperty] public partial IEnumerable<Record> Records { get; set; }
+    [ObservableProperty]
+    public partial string Filter { get; set; }
 
     partial void OnRecordsChanged(IEnumerable<Record>? oldValue, IEnumerable<Record>? newValue)
     {
         if (oldValue != null)
             foreach (var record in oldValue)
+            {
                 record.PropertyChanged -= RecordOnPropertyChanged;
+                if (!record.IsVisible)
+                {
+                    record.IsVisible = true; 
+                }
+            }
+               
 
         if (newValue != null)
             foreach (var record in newValue)
@@ -68,6 +98,7 @@ public partial class MainWindowModel : ObservableObject
 
     public ICommand SaveCommand { get; }
     public ICommand NextCommand { get; }
+    public ICommand SearchCommand { get; }
     private bool IsDisposed { get; set; }
 
     private void Save()
@@ -104,21 +135,36 @@ public partial class MainWindowModel : ObservableObject
         while (true)
         {
             var start = CurrentRecord == null ? 0 : CurrentRecord.Row.RowNumber();
-            var next = AllRecords.Skip(start - 91)
+            var next = AllRecords.Skip(start - SkipCount)
                 .FirstOrDefault(x => !x.IsChecked && decimal.TryParse(x.InvoiceAmount, out _));
             if (next == null) return;
 
             CurrentRecord = next;
-            if (Records?.Count() == 0)
+            if (!Records.Any())
             {
                 continue;
             }
 
+            foreach (var record in Records)
+            {
+                if (RelatedRecordSets.TryGetValue(record.Name, out var dic))
+                {
+                    dic.Add(record);
+                }
+                else
+                {
+                    dic = new HashSet<Record>();
+                    dic.Add(record);
+                    RelatedRecordSets.Add(record.Name, dic);
+                }
+            }
+            
             break;
         }
     }
 
     private IReadOnlyList<Record> AllRecords { get; }
+    private const int SkipCount = 0;
 
     private IReadOnlyList<Record> GetAllRecords()
     {
@@ -127,7 +173,7 @@ public partial class MainWindowModel : ObservableObject
         var usedRange = worksheet.RangeUsed();
         return usedRange == null
             ? []
-            : Enumerable.Range(2, usedRange.RowCount() - 1).Skip(91).Select(x => new Record(worksheet.Row(x))).ToList();
+            : Enumerable.Range(2, usedRange.RowCount() - 1).Skip(SkipCount).Select(x => new Record(worksheet.Row(x))).ToList();
     }
 
     private IReadOnlyList<Record> GetRelatedRecords(Record currentRecord)
@@ -135,14 +181,17 @@ public partial class MainWindowModel : ObservableObject
         var similarityCalculator = LcsStringUtil.CalculateSimilarityPercentage;
         return
         [
-            .. AllRecords.Where(x => !CurrentRecordSet.Contains(x) && !x.IsChecked).Select(x => new
-                {
-                    Record = x,
-                    Similarity = similarityCalculator(
-                        string.IsNullOrEmpty(currentRecord.Key) ? currentRecord.Name : currentRecord.Key,
-                        string.IsNullOrEmpty(x.Key) ? x.Name : x.Key)
-                })
-                .Where(x => x.Similarity >= 50).OrderByDescending(x => x.Similarity).Select(x => x.Record)
+            .. AllRecords.Where(x =>
+                    !CurrentRecordSet.Contains(x) && !x.IsChecked &&
+                    (!RelatedRecordSets.TryGetValue(x.Name, out var dic) || dic.Contains(currentRecord))).Select(x =>
+                    new
+                    {
+                        Record = x,
+                        Similarity = similarityCalculator(
+                            string.IsNullOrEmpty(currentRecord.Key) ? currentRecord.Name : currentRecord.Key,
+                            string.IsNullOrEmpty(x.Key) ? x.Name : x.Key)
+                    })
+                .Where(x => x.Similarity >= 30).OrderByDescending(x => x.Similarity).Select(x => x.Record)
         ];
     }
 
